@@ -175,5 +175,61 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn test_add() -> R {
+        let input = "(\\x -> (x + 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Add, var("x"), i(1))));
+        Ok(())
+    }
+
+    #[test]
+    fn test_sub() -> R {
+        let input = "(\\x -> (x - 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Sub, var("x"), i(1))));
+        Ok(())
+    }
+    
+    #[test]
+    fn test_mul() -> R {
+        let input = "(\\x -> (x * 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Mul, var("x"), i(1))));
+        Ok(())
+    }
+
+    #[test]
+    fn test_div() -> R {
+        let input = "(\\x -> (x / 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Div, var("x"), i(1))));
+        Ok(())
+    }
+
+    #[test]
+    fn test_eq() -> R {
+        let input = "(\\x -> (x == true))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Eq, var("x"), b(true))));
+        Ok(())
+    }
+
+    #[test]
+    fn test_lt() -> R {
+        let input = "(\\x -> (x < 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Lt, var("x"), i(1))));
+        Ok(())
+    }
+
+    #[test]
+    fn test_gt() -> R {
+        let input = "(\\x -> (x > 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Gt, var("x"), i(1))));
+        Ok(())
+    }
+
     // TODO: Add some more tests to cover the remaining syntax elements
 }
