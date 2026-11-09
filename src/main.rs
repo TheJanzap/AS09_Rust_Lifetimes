@@ -61,7 +61,7 @@ mod tests {
     fn test_fibonacci() {
         // TODO: implement the fibonacci function https://en.wikipedia.org/wiki/Fibonacci_sequence
         let input = r#"
-            fib = TODO: Implement fibonacci function;
+            fib = (\n -> (if (n == 0) then 0 else (if (n == 1) then 1 else ((fib (n-1)) + (fib (n-2))))));
             main = (fib 10);
         "#;
 
