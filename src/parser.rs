@@ -83,9 +83,9 @@ fn parse_identifier(input: &str) -> IResult<&str, String> {
 // Syntax: λx. x
 fn parse_abs(input: &str) -> IResult<&str, Term> {
     // TODO: Also accept Haskell style notation: \x -> x
-    let (input, _) = ws(char('λ'))(input)?; 
+    let (input, _) = ws(alt((char('λ'), char('\\'))))(input)?;
     let (input, var) = ws(parse_identifier)(input)?;
-    let (input, _) = ws(char('.'))(input)?; 
+    let (input, _) = ws(alt((tag("."), tag("->"))))(input)?;
     let (input, body) = ws(parse_expression)(input)?;
     Ok((input, abs(&var, body)))
 }
@@ -146,6 +146,14 @@ mod tests {
     #[test]
     fn test_abs() -> R {
         let input = "(λx. (x y))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(abs("x", app(var("x"), var("y"))), term);
+        Ok(())
+    }
+
+    #[test]
+    fn test_abs_haskell() -> R {
+        let input = "(\\x -> (x y))";
         let (_, term) = parse_expression(input)?;
         assert_eq!(abs("x", app(var("x"), var("y"))), term);
         Ok(())
