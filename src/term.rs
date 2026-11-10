@@ -21,6 +21,8 @@ pub enum PrimOp {
     Eq,  // ==
     Lt,  // <
     Gt,  // >
+    And, // &&
+    Or,  // ||
     // TODO: add `&&` and `||` operators
 }
 
