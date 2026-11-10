@@ -83,9 +83,16 @@ fn parse_identifier(input: &str) -> IResult<&str, String> {
 // Syntax: λx. x
 fn parse_abs(input: &str) -> IResult<&str, Term> {
     // TODO: Also accept Haskell style notation: \x -> x
-    let (input, _) = ws(alt((char('λ'), char('\\'))))(input)?;
+    let (input, start_char) = ws(alt((char('λ'), char('\\'))))(input)?;
+
+    let sep_parser= match start_char {
+        'λ' => tag("."),
+        '\\' => tag("->"),
+        _ => unreachable!(),
+    };
+
     let (input, var) = ws(parse_identifier)(input)?;
-    let (input, _) = ws(alt((tag("."), tag("->"))))(input)?;
+    let (input, _) = ws(sep_parser)(input)?;
     let (input, body) = ws(parse_expression)(input)?;
     Ok((input, abs(&var, body)))
 }
@@ -157,6 +164,14 @@ mod tests {
         let (_, term) = parse_expression(input)?;
         assert_eq!(abs("x", app(var("x"), var("y"))), term);
         Ok(())
+    }
+
+    #[test]
+    fn test_abs_mixed_syntax_fails() {
+        for i in ["(λx -> (x y))", "(\\x. (x y))"] {
+            let result = parse_expression(i);
+            assert!(result.is_err(), "'{i}' should not parse!")
+        }
     }
 
     #[test]
