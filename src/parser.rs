@@ -83,9 +83,16 @@ fn parse_identifier(input: &str) -> IResult<&str, String> {
 // Syntax: λx. x
 fn parse_abs(input: &str) -> IResult<&str, Term> {
     // TODO: Also accept Haskell style notation: \x -> x
-    let (input, _) = ws(char('λ'))(input)?; 
+    let (input, start_char) = ws(alt((char('λ'), char('\\'))))(input)?;
+
+    let sep_parser= match start_char {
+        'λ' => tag("."),
+        '\\' => tag("->"),
+        _ => unreachable!(),
+    };
+
     let (input, var) = ws(parse_identifier)(input)?;
-    let (input, _) = ws(char('.'))(input)?; 
+    let (input, _) = ws(sep_parser)(input)?;
     let (input, body) = ws(parse_expression)(input)?;
     Ok((input, abs(&var, body)))
 }
@@ -152,6 +159,22 @@ mod tests {
     }
 
     #[test]
+    fn test_abs_haskell() -> R {
+        let input = "(\\x -> (x y))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(abs("x", app(var("x"), var("y"))), term);
+        Ok(())
+    }
+
+    #[test]
+    fn test_abs_mixed_syntax_fails() {
+        for i in ["(λx -> (x y))", "(\\x. (x y))"] {
+            let result = parse_expression(i);
+            assert!(result.is_err(), "'{i}' should not parse!")
+        }
+    }
+
+    #[test]
     fn test_if() -> R {
         let input = "(λx. (if x then y  else 0))";
         let (_, term) = parse_expression(input)?;
@@ -164,6 +187,62 @@ mod tests {
         let input = "((x y) z)";
         let (_, term) = parse_expression(input)?;
         assert_eq!(app(app(var("x"), var("y")), var("z")), term,);
+        Ok(())
+    }
+
+    #[test]
+    fn test_add() -> R {
+        let input = "(\\x -> (x + 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Add, var("x"), i(1))));
+        Ok(())
+    }
+
+    #[test]
+    fn test_sub() -> R {
+        let input = "(\\x -> (x - 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Sub, var("x"), i(1))));
+        Ok(())
+    }
+    
+    #[test]
+    fn test_mul() -> R {
+        let input = "(\\x -> (x * 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Mul, var("x"), i(1))));
+        Ok(())
+    }
+
+    #[test]
+    fn test_div() -> R {
+        let input = "(\\x -> (x / 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Div, var("x"), i(1))));
+        Ok(())
+    }
+
+    #[test]
+    fn test_eq() -> R {
+        let input = "(\\x -> (x == true))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Eq, var("x"), b(true))));
+        Ok(())
+    }
+
+    #[test]
+    fn test_lt() -> R {
+        let input = "(\\x -> (x < 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Lt, var("x"), i(1))));
+        Ok(())
+    }
+
+    #[test]
+    fn test_gt() -> R {
+        let input = "(\\x -> (x > 1))";
+        let (_, term) = parse_expression(input)?;
+        assert_eq!(term, abs("x", primop(PrimOp::Gt, var("x"), i(1))));
         Ok(())
     }
 

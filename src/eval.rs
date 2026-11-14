@@ -67,8 +67,14 @@ pub fn eval(env: &Env, term: &Term) -> Result<Term, String> {
                             PrimOp::Add => n1 + n2,
                             PrimOp::Sub => n1 - n2,
                             PrimOp::Mul => n1 * n2,
-                            PrimOp::Div => n1 / n2, // TODO: handle division by zero and add a test
-                            _ => unreachable!()
+                            PrimOp::Div => {
+                                if *n2 != 0 {
+                                    n1 / n2
+                                } else {
+                                    return Err("Division by Zero".to_string());
+                                }
+                            } // TODO: handle division by zero and add a test
+                            _ => unreachable!(),
                         }))
                     } else {
                         Ok(primop(*op, l, r))
@@ -96,6 +102,17 @@ pub fn eval(env: &Env, term: &Term) -> Result<Term, String> {
                         Ok(primop(*op, l, r))
                     }
                 }
+
+                PrimOp::And | PrimOp::Or => {
+                    if let (Term::Bool(b1), Term::Bool(b2)) = (&l, &r) {
+                        Ok(b(match op {
+                            PrimOp::And => *b1 && *b2,
+                            PrimOp::Or => *b1 || *b2,
+                            _ => unreachable!(),
+                        }))
+                    } else {
+                        Ok(primop(*op, l, r))
+                    }
             }
         }
     }
@@ -293,5 +310,28 @@ mod tests {
         let evaluated = eval(&empty_env(), &term).unwrap();
         let expected = var("z");
         assert_eq!(evaluated, expected);
+    }
+
+    #[test]
+    fn test_division_by_zero() {
+        let term = primop(PrimOp::Div, i(2), i(0));
+        let evaluated = eval(&empty_env(), &term);
+        assert!(evaluated.is_err());
+    }
+
+    #[test]
+    fn test_and() {
+        let term = primop(PrimOp::And, b(true), b(false));
+        let evaluated = eval(&empty_env(), &term).unwrap();
+        let expected = b(false);
+        assert_eq!(evaluated, expected)
+    }
+
+    #[test]
+    fn test_or() {
+        let term = primop(PrimOp::Or, b(true), b(false));
+        let evaluated = eval(&empty_env(), &term).unwrap();
+        let expected = b(true);
+        assert_eq!(evaluated, expected)
     }
 }
